@@ -76,8 +76,11 @@ f4      | f4           | Argument 5             | No
 f5      | f5           | Argument 6             | No
 f6      | f6           | Argument 7             | No
 f7      | f7           | Argument 8             | No
-f20-f31 | f20-f31      | Temporary registers    | Yes?
+f8-f13  | f8-f13       | Temporary registers    | No
+f14-f31 | f20-f31      | Callee saved registers | Yes*
 
+*: Floating-point values in callee-saved registers are only preserved across calls if they are no larger than the width of a floating-point register in the targeted ABI. Therefore, these registers can always be considered temporaries if targeting the base integer calling convention.
+	
 # <a name=procedure-calling-convention></a> Procedure Calling Convention
 ## <a name=integer-calling-convention></a> Integer Calling Convention
 
@@ -237,7 +240,7 @@ Dynamic stack allocations such as alloca insert data after local variables.
 
 <!-- below from MWDT //dwarc/TechPubs/UserDocs/Source/4091_ARCv3_ABI/RST/source/low_lvl.rst#17 -->
 
- Low-Level System Information {#low_lvl}
+Low-Level System Information {#low_lvl}
 ============================
 
 Processor Architecture
