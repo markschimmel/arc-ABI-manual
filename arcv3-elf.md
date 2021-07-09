@@ -1,15 +1,18 @@
 # ARCv3 ELF ABI specification
 
 ## Table of Contents
-1. [Register Convention](#register-convention)
+1. [Low-Level System Information] (#low-level-sys-info)
+	* [Processor Architecture] (#processor-architecture)
+	* [Data Representation] (#data-representation)
+3. [Register Convention](#register-convention)
 	* [Integer Register Convention](#integer-register-convention)
 	* [Floating-point Register Convention](#floating-point-register-convention)
-2. [Procedure Calling Convention](#procedure-calling-convention)
+4. [Procedure Calling Convention](#procedure-calling-convention)
 	* [Integer Calling Convention](#integer-calling-convention)
 	* [Hardware Floating-point Calling Convention](#hardware-floating-point-calling-convention)
 	* [Default ABIs and C type sizes](#default-abis-and-c-type-sizes)
 	* [va_list, va_start, and va_arg](#va-list-va-start-and-va-arg)
-3. [ELF Object Files](#elf-object-file)
+5. [ELF Object Files](#elf-object-file)
 	* [File Header](#file-header)
 	* [Sections](#sections)
 	* [String Tables](#string-tables)
@@ -20,7 +23,7 @@
 	* [Note Sections](#note-sections)
 	* [Dynamic Table](#dynamic-table)
 	* [Hash Table](#hash-table)
-4. [DWARF](#dwarf)
+6. [DWARF](#dwarf)
 	* [Dwarf Register Numbers](#dwarf-register-numbers)
 
 ## Copyright and license information
@@ -29,6 +32,132 @@ This ARCv3 ELF ABI specification document is
 
  &copy; 2020 Synopsys, Claudiu Zissulescu <claziss@synopsys.com>
 
+# <a name=low-level-sys-info></a> Low-Level System Information
+## <a name=processor-architecture></a> Processor Architecture
+
+Programs intended to execute on ARCv3-based processors use the ARCv3
+instruction set and the instruction encoding and semantics of the
+architecture.
+
+Assume that all instructions defined by the architecture are neither
+privileged nor exist optionally and work as documented.
+
+To conform to ARCv3 System V ABI, the processor must do the following:
+
+*   implement the instructions of the architecture,
+*   perform the specified operations,
+*   produce the expected results.
+
+The ABI neither places performance constraints on systems nor specifies
+what instructions must be implemented in hardware. A software emulation
+of the architecture can conform to the ABI.
+
+:exclamation:  Caution
+
+Some processors might support optional or additional instructions or
+capabilities that do not conform to the ARCv3 ABI. Executing programs
+that use such instructions or capabilities on hardware that does not
+have the required additional capabilities results in undefined behavior.
+
+## <a name=data-representation></a> Data Representation
+### Byte Ordering
+
+The architecture defines an eight-bit byte, a 16-bit halfword, a 32-bit
+word, and a 64-bit double word. Byte ordering defines how the bytes that
+make up halfwords, words, and doublewords are ordered in memory.
+
+Most-significant-byte (MSB) ordering, also called as "big-endian", means
+that the most-significant byte is located in the lowest addressed byte
+position in a storage unit (byte 0).
+
+Least-significant-byte (LSB) ordering, also called as "little-endian",
+means that the least-significant byte is located in the lowest addressed
+byte position in a storage unit (byte 0).
+
+ARCv3-based processors support either big-endian or little-endian byte
+ordering. However, this specification defines only the base-case
+little-endian (LSB) architecture.
+
+### Data Layout in Memory
+
+ARCv3-based processors access data memory using byte addresses and
+generally require that all memory addresses be aligned as follows:
+
+-   64-bit double-words are aligned to
+    -   64-bit boundaries on ARC64.
+    -   32-bit boundaries on ARC32.
+-   32-bit words are aligned to 32-bit word boundaries.
+-   16-bit halfwords are aligned to 16-bit halfword boundaries.
+
+#### Sixty-Four-Bit Data
+
+`64b_reg_LE` shows the little-endian
+representation in byte-wide memory. If the ARCv3-based processor
+supports big-endian addressing, the data is stored in memory as shown in
+`64b_reg_BE`.
+
+> Sixty-Four-Bit Register Data in Byte-Wide Memory, Little-Endian
+
+#### Thirty-Two-Bit Data
+
+`reg_32b`hows the data representation in a general purpose register.
+
+> Register Containing Thirty-Two-Bit Data
+
+`32b_LE` shows the little-endian representation in byte-wide memory.
+
+> Thirty-Two-Bit Register Data in Byte-Wide Memory, Little-Endian
+
+`32b_BE` shows the big-endian representation.
+
+> Thirty-Two-Bit Register Data in Byte-Wide Memory, Big-Endian
+
+#### Sixteen-Bit Data
+
+`reg_16b` shows the 16-bit data representation in a general purpose register.
+
+For the programmer\'s model, the data is always contained in the lower
+bits of the core register and the data memory is accessed using a byte
+address. This model is sometimes referred to as a data invariance
+principle.
+
+> Register Containing Sixteen-Bit Data
+
+`16b_LE` shows the little-endian representation of 16-bit data in byte-wide memory.
+
+> Sixteen-Bit Register Data in Byte-Wide Memory, Little-Endian
+
+`16b_BE`{.interpreted-text role="numref"} shows the big-endian
+representation.
+
+> Sixteen-Bit Register Data in Byte-Wide Memory, Big-Endian
+
+#### Eight-Bit Data
+
+`reg_8b`{.interpreted-text role="numref"} shows the 8-bit data
+representation in a general purpose register. For the programmer\'s
+model, the data is always contained in the lower bits of the core
+register and the data memory is accessed using a byte address. This
+model is sometimes referred to as a data invariance principle.
+
+> Register Containing Eight-Bit Data
+
+`8b_bw`{.interpreted-text role="numref"} shows the representation of
+8-bit data in byte-wide memory. Regardless of the endianness of the
+ARCv3-based system, the byte-aligned address, n, of the byte is
+explicitly given and the byte is stored or read from that explicit
+address.
+
+> Eight-Bit Register Data in Byte-Wide Memory
+
+#### One-Bit Data
+
+The ARCv3 instruction-set architecture supports single-bit operations on
+data stored in the core registers. A bit manipulation instruction
+includes an immediate value specifying the bit to operate on. Bit
+manipulation instructions can operate on 8-bit, 16-bit, or 32-bit data
+located within core registers because each bit is individually
+addressable.
 
 # <a name=register-convention></a> Register Convention
 
@@ -161,8 +290,6 @@ to the standard ABI.
 Procedures must not rely upon the persistence of stack-allocated data
 whose addresses lie below the stack pointer.
 
-No floating-point registers, if present, are preserved across calls.
-
 ## <a name=hardware-floating-point-calling-convention></a> Hardware Floating-point Calling Convention
 
 
@@ -240,161 +367,6 @@ Dynamic stack allocations such as alloca insert data after local variables.
 
 <!-- below from MWDT //dwarc/TechPubs/UserDocs/Source/4091_ARCv3_ABI/RST/source/low_lvl.rst#17 -->
 
-Low-Level System Information {#low_lvl}
-============================
-
-Processor Architecture
-----------------------
-
-Programs intended to execute on ARCv3-based processors use the ARCv3
-instruction set and the instruction encoding and semantics of the
-architecture.
-
-Assume that all instructions defined by the architecture are neither
-privileged nor exist optionally and work as documented.
-
-To conform to ARCv3 System V ABI, the processor must do the following:
-
-> -   implement the instructions of the architecture,
-> -   perform the specified operations,
-> -   produce the expected results.
-
-The ABI neither places performance constraints on systems nor specifies
-what instructions must be implemented in hardware. A software emulation
-of the architecture can conform to the ABI.
-
-::: {.caution}
-::: {.admonition-title}
-Caution
-:::
-
-Some processors might support optional or additional instructions or
-capabilities that do not conform to the ARCv3 ABI. Executing programs
-that use such instructions or capabilities on hardware that does not
-have the required additional capabilities results in undefined behavior.
-:::
-
-Data Representation
--------------------
-
-### Byte Ordering
-
-The architecture defines an eight-bit byte, a 16-bit halfword, a 32-bit
-word, and a 64-bit double word. Byte ordering defines how the bytes that
-make up halfwords, words, and doublewords are ordered in memory.
-
-Most-significant-byte (MSB) ordering, also called as "big-endian", means
-that the most-significant byte is located in the lowest addressed byte
-position in a storage unit (byte 0).
-
-Least-significant-byte (LSB) ordering, also called as "little-endian",
-means that the least-significant byte is located in the lowest addressed
-byte position in a storage unit (byte 0).
-
-ARCv3-based processors support either big-endian or little-endian byte
-ordering. However, this specification defines only the base-case
-little-endian (LSB) architecture.
-
-`bit_byte_num_hw`{.interpreted-text role="numref"} through
-`bit_byte_num_dw`{.interpreted-text role="numref"} illustrate the
-conventions for bit and byte numbering within storage units of varying
-width. These conventions apply to both integer data and floating-point
-data, where the most-significant byte of a floating-point value holds
-the sign and at least the start of the exponent. The figures show byte
-numbers in the upper right corners, and bit numbers in the lower
-corners.
-
-> Bit and Byte Numbering in Halfwords
-
-### Data Layout in Memory
-
-ARCv3-based processors access data memory using byte addresses and
-generally require that all memory addresses be aligned as follows:
-
--   64-bit double-words are aligned to
-    -   64-bit boundaries on ARC64.
-    -   32-bit boundaries on ARC32.
--   32-bit words are aligned to 32-bit word boundaries.
--   16-bit halfwords are aligned to 16-bit halfword boundaries.
-
-Bytes have no specific alignment.
-
-#### Sixty-Four-Bit Data
-
-`64b_reg_LE`{.interpreted-text role="numref"} shows the little-endian
-representation in byte-wide memory. If the ARCv3-based processor
-supports big-endian addressing, the data is stored in memory as shown in
-`64b_reg_BE`{.interpreted-text role="numref"}.
-
-> Sixty-Four-Bit Register Data in Byte-Wide Memory, Little-Endian
-
-#### Thirty-Two-Bit Data
-
-`reg_32b`{.interpreted-text role="numref"} shows the data representation
-in a general purpose register.
-
-> Register Containing Thirty-Two-Bit Data
-
-`32b_LE`{.interpreted-text role="numref"} shows the little-endian
-representation in byte-wide memory.
-
-> Thirty-Two-Bit Register Data in Byte-Wide Memory, Little-Endian
-
-`32b_BE`{.interpreted-text role="numref"} shows the big-endian
-representation.
-
-> Thirty-Two-Bit Register Data in Byte-Wide Memory, Big-Endian
-
-#### Sixteen-Bit Data
-
-`reg_16b`{.interpreted-text role="numref"} shows the 16-bit data
-representation in a general purpose register.
-
-For the programmer\'s model, the data is always contained in the lower
-bits of the core register and the data memory is accessed using a byte
-address. This model is sometimes referred to as a data invariance
-principle.
-
-> Register Containing Sixteen-Bit Data
-
-`16b_LE`{.interpreted-text role="numref"} shows the little-endian
-representation of 16-bit data in byte-wide memory.
-
-> Sixteen-Bit Register Data in Byte-Wide Memory, Little-Endian
-
-`16b_BE`{.interpreted-text role="numref"} shows the big-endian
-representation.
-
-> Sixteen-Bit Register Data in Byte-Wide Memory, Big-Endian
-
-#### Eight-Bit Data
-
-`reg_8b`{.interpreted-text role="numref"} shows the 8-bit data
-representation in a general purpose register. For the programmer\'s
-model, the data is always contained in the lower bits of the core
-register and the data memory is accessed using a byte address. This
-model is sometimes referred to as a data invariance principle.
-
-> Register Containing Eight-Bit Data
-
-`8b_bw`{.interpreted-text role="numref"} shows the representation of
-8-bit data in byte-wide memory. Regardless of the endianness of the
-ARCv3-based system, the byte-aligned address, n, of the byte is
-explicitly given and the byte is stored or read from that explicit
-address.
-
-> Eight-Bit Register Data in Byte-Wide Memory
-
-#### One-Bit Data
-
-The ARCv3 instruction-set architecture supports single-bit operations on
-data stored in the core registers. A bit manipulation instruction
-includes an immediate value specifying the bit to operate on. Bit
-manipulation instructions can operate on 8-bit, 16-bit, or 32-bit data
-located within core registers because each bit is individually
-addressable.
-
-![Register Containing One-Bit Data](../images/Reg_1b.png){.align-center}
 
 ### Fundamental Types
 
